@@ -1,0 +1,93 @@
+﻿<!doctype html>
+<html lang="ja">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Neon Night Survivors</title>
+    <link rel="stylesheet" href="./src/styles.css" />
+  </head>
+  <body>
+    <div class="app-shell">
+      <canvas id="game-canvas" width="1280" height="720" aria-label="game canvas"></canvas>
+
+      <section id="hud" class="hud">
+        <div class="hud__top">
+          <div class="panel">
+            <div class="panel__label">HP</div>
+            <div class="bar"><div id="hp-fill" class="bar__fill bar__fill--hp"></div></div>
+            <div id="hp-text" class="panel__value">100 / 100</div>
+          </div>
+          <div class="panel">
+            <div class="panel__label">EXP</div>
+            <div class="bar"><div id="xp-fill" class="bar__fill bar__fill--xp"></div></div>
+            <div id="xp-text" class="panel__value">0 / 10</div>
+          </div>
+          <div class="stats-row">
+            <div class="chip"><span>LV</span><strong id="level-text">1</strong></div>
+            <div class="chip"><span>TIME</span><strong id="time-text">00:00</strong></div>
+            <div class="chip"><span>SCORE</span><strong id="score-text">0</strong></div>
+            <div class="chip"><span>STATE</span><strong id="state-text">TITLE</strong></div>
+          </div>
+        </div>
+        <div class="hud__bottom">
+          <div class="panel panel--weapons">
+            <div class="panel__label">WEAPONS</div>
+            <div id="weapons-list" class="weapon-list"></div>
+          </div>
+          <div class="panel panel--controls">
+            <div class="panel__label">CONTROLS</div>
+            <div class="controls-text">
+              Move: WASD / Arrow Keys
+              <br />
+              Pause: P / Esc
+              <br />
+              Fullscreen: F
+            </div>
+          </div>
+        </div>
+      </section>
+
+      <section id="title-screen" class="screen screen--visible screen--title">
+        <div class="title-minimal">
+          <div class="title-minimal__logo-wrap">
+            <img class="title-logo" src="./assets/images/ui/logo.png" alt="Neon Night Survivors logo" />
+          </div>
+          <div class="title-minimal__action title-minimal__action--stack">
+            <button id="start-btn" class="btn btn--primary title-start">Start</button>
+            <button id="debug-btn" class="btn title-start title-start--debug">Debug Mode</button>
+          </div>
+        </div>
+      </section>
+
+      <section id="levelup-screen" class="screen">
+        <div class="screen__card screen__card--wide">
+          <p class="eyebrow">LEVEL UP</p>
+          <h2>強化を選択</h2>
+          <div id="levelup-choices" class="choice-list"></div>
+        </div>
+      </section>
+
+      <section id="gameover-screen" class="screen">
+        <div class="screen__card">
+          <p class="eyebrow">GAME OVER</p>
+          <h2 id="gameover-title">夜は終わった</h2>
+          <p id="final-stats" class="lead"></p>
+          <div class="screen__actions">
+            <button id="retry-btn" class="btn btn--primary">Retry</button>
+            <button id="title-btn" class="btn">Title</button>
+          </div>
+        </div>
+      </section>
+
+      <div id="pause-pill" class="pause-pill">PAUSED</div>
+
+      <div id="touch-joystick" class="joystick" aria-hidden="true">
+        <div id="joystick-base" class="joystick__base">
+          <div id="joystick-stick" class="joystick__stick"></div>
+        </div>
+      </div>
+    </div>
+
+    <script src="./src/standalone.js"></script>
+  </body>
+</html>
