@@ -1947,6 +1947,9 @@ class Game {
   startRun(debugMode = false) {
     this.initializeState();
     this.debugMode = debugMode;
+    if (this.debugMode) {
+      for (const key of WEAPON_ORDER) this.weapons[key] = 0;
+    }
     this.mode = GAME_MODES.PLAYING;
     this.audio.playBgm("bgm.stage");
     if (this.debugMode) this.setupDebugMode();
