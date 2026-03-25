@@ -41,10 +41,16 @@ export class Renderer {
     if (floorImage) {
       const pattern = ctx.createPattern(floorImage, "repeat");
       if (pattern) {
+        const parallaxX = game.camera.x;
+        const parallaxY = game.camera.y;
+        const tileWidth = floorImage.width || 512;
+        const tileHeight = floorImage.height || 512;
+        const offsetX = -(((parallaxX % tileWidth) + tileWidth) % tileWidth);
+        const offsetY = -(((parallaxY % tileHeight) + tileHeight) % tileHeight);
         ctx.save();
-        ctx.translate(-game.camera.x * 0.2, -game.camera.y * 0.2);
         ctx.fillStyle = pattern;
-        ctx.fillRect(game.camera.x, game.camera.y, width, height);
+        ctx.translate(offsetX, offsetY);
+        ctx.fillRect(-tileWidth, -tileHeight, width + tileWidth * 2, height + tileHeight * 2);
         ctx.restore();
       }
     } else {
