@@ -13,11 +13,6 @@
       <section id="hud" class="hud">
         <div class="hud__top">
           <div class="panel">
-            <div class="panel__label">HP</div>
-            <div class="bar"><div id="hp-fill" class="bar__fill bar__fill--hp"></div></div>
-            <div id="hp-text" class="panel__value">100 / 100</div>
-          </div>
-          <div class="panel">
             <div class="panel__label">EXP</div>
             <div class="bar"><div id="xp-fill" class="bar__fill bar__fill--xp"></div></div>
             <div id="xp-text" class="panel__value">0 / 10</div>
@@ -30,8 +25,12 @@
           </div>
         </div>
         <div class="hud__bottom">
-          <div class="panel panel--weapons">
-            <div class="panel__label">WEAPONS</div>
+          <div id="weapons-panel" class="panel panel--weapons panel--accordion is-collapsed">
+            <button id="weapons-toggle" class="panel__toggle" type="button" aria-expanded="false">
+              <span class="panel__toggle-title">WEAPONS</span>
+              <span id="weapons-summary" class="panel__summary"></span>
+              <span id="weapons-toggle-icon" class="panel__toggle-icon">+</span>
+            </button>
             <div id="weapons-list" class="weapon-list"></div>
           </div>
           <div class="panel panel--controls">
