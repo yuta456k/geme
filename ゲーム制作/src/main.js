@@ -1,9 +1,10 @@
 import { InputManager } from "./game/InputManager.js";
 import { Game } from "./game/Game.js";
-import { createUiBindings } from "./ui/dom.js";
+import { createUiBindings, initializeUi } from "./ui/dom.js";
 
 const canvas = document.getElementById("game-canvas");
 const ui = createUiBindings();
+initializeUi(ui);
 const input = new InputManager(canvas, document.getElementById("joystick-base"), document.getElementById("joystick-stick"));
 const game = new Game(canvas, input, ui);
 
