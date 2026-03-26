@@ -516,6 +516,7 @@ function createCat(player) {
     x: player.x + 46,
     y: player.y + 20,
     radius: 18,
+    facingX: 1,
     targetId: null,
     attackCooldown: 0,
     comboTimer: 0,
@@ -532,20 +533,25 @@ function updateCat(cat, player, target, stats, dt) {
 
   if (target) {
     const dist = distance(cat.x, cat.y, target.x, target.y);
-    if (dist > target.radius + 18) {
+    const stopDistance = target.radius + 24;
+    if (dist > stopDistance) {
       destinationX = target.x;
       destinationY = target.y;
+    } else {
+      destinationX = cat.x;
+      destinationY = cat.y;
     }
   }
 
   const dir = normalize(destinationX - cat.x, destinationY - cat.y);
+  if (Math.abs(dir.x) > 0.16) cat.facingX = dir.x < 0 ? -1 : 1;
   cat.x += dir.x * stats.speed * dt;
   cat.y += dir.y * stats.speed * dt;
 
   const leashDistance = distance(cat.x, cat.y, player.x, player.y);
-  if (leashDistance > stats.leash + 60) {
-    cat.x += (anchorX - cat.x) * 0.1;
-    cat.y += (anchorY - cat.y) * 0.1;
+  if (leashDistance > stats.leash * 1.5 + 60) {
+    cat.x += (anchorX - cat.x) * 0.08;
+    cat.y += (anchorY - cat.y) * 0.08;
   }
 
   cat.attackCooldown = Math.max(0, cat.attackCooldown - dt);
@@ -666,6 +672,7 @@ class InputManager {
     this.keys = new Set();
     this.pressed = new Set();
     this.touchVector = { x: 0, y: 0 };
+    this.joystickRoot = joystickBase.parentElement;
     this.joystickBase = joystickBase;
     this.joystickStick = joystickStick;
     this.pointerId = null;
@@ -691,6 +698,7 @@ class InputManager {
       const touch = [...event.changedTouches].find((item) => item.clientX < window.innerWidth * 0.5);
       if (!touch || this.pointerId !== null) return;
       this.pointerId = touch.identifier;
+      this.placeJoystick(touch.clientX, touch.clientY);
       this.baseRect = this.joystickBase.getBoundingClientRect();
       this.updateTouchVector(touch.clientX, touch.clientY);
     };
@@ -710,12 +718,26 @@ class InputManager {
       this.touchVector.x = 0;
       this.touchVector.y = 0;
       this.joystickStick.style.transform = "translate(0px, 0px)";
+      this.joystickRoot.classList.remove("is-active");
     };
 
     window.addEventListener("touchstart", startTouch, { passive: true });
     window.addEventListener("touchmove", moveTouch, { passive: true });
     window.addEventListener("touchend", endTouch, { passive: true });
     window.addEventListener("touchcancel", endTouch, { passive: true });
+  }
+
+  placeJoystick(clientX, clientY) {
+    const shellRect = this.canvas.parentElement.getBoundingClientRect();
+    const baseSize = this.joystickBase.offsetWidth || 128;
+    const maxLeft = Math.max(0, shellRect.width - baseSize);
+    const maxTop = Math.max(0, shellRect.height - baseSize);
+    const left = clamp(clientX - shellRect.left - baseSize / 2, 0, maxLeft);
+    const top = clamp(clientY - shellRect.top - baseSize / 2, 0, maxTop);
+    this.joystickRoot.style.left = `${left}px`;
+    this.joystickRoot.style.top = `${top}px`;
+    this.joystickRoot.style.bottom = "auto";
+    this.joystickRoot.classList.add("is-active");
   }
 
   updateTouchVector(clientX, clientY) {
@@ -1218,6 +1240,7 @@ function resolveProjectileHits(game) {
 
 const WEAPON_ICON_SHEET = "./assets/images/ui/icon.png";
 const WEAPON_ICON_FRAMES = 5;
+let weaponsCollapsed = true;
 
 function screenVisible(element, visible) {
   element.classList.toggle("screen--visible", visible);
@@ -1245,6 +1268,10 @@ function createUiBindings() {
     timeText: document.getElementById("time-text"),
     scoreText: document.getElementById("score-text"),
     stateText: document.getElementById("state-text"),
+    weaponsPanel: document.getElementById("weapons-panel"),
+    weaponsToggle: document.getElementById("weapons-toggle"),
+    weaponsSummary: document.getElementById("weapons-summary"),
+    weaponsToggleIcon: document.getElementById("weapons-toggle-icon"),
     weaponsList: document.getElementById("weapons-list"),
     titleScreen: document.getElementById("title-screen"),
     levelupScreen: document.getElementById("levelup-screen"),
@@ -1259,11 +1286,25 @@ function createUiBindings() {
   };
 }
 
+function syncWeaponsAccordion(ui) {
+  ui.weaponsPanel.classList.toggle("is-collapsed", weaponsCollapsed);
+  ui.weaponsToggle.setAttribute("aria-expanded", String(!weaponsCollapsed));
+  ui.weaponsToggleIcon.textContent = weaponsCollapsed ? "+" : "-";
+}
+
+function initializeUi(ui) {
+  syncWeaponsAccordion(ui);
+  ui.weaponsToggle.addEventListener("click", () => {
+    weaponsCollapsed = !weaponsCollapsed;
+    syncWeaponsAccordion(ui);
+  });
+}
+
 function updateHud(ui, game) {
   const hpRatio = game.player ? game.player.hp / game.player.maxHp : 1;
   const xpRatio = game.xpNext > 0 ? game.xp / game.xpNext : 0;
-  ui.hpFill.style.width = `${Math.max(0, Math.min(100, hpRatio * 100))}%`;
-  ui.hpText.textContent = `${Math.ceil(game.player?.hp ?? 0)} / ${Math.ceil(game.player?.maxHp ?? 0)}`;
+  if (ui.hpFill) ui.hpFill.style.width = `${Math.max(0, Math.min(100, hpRatio * 100))}%`;
+  if (ui.hpText) ui.hpText.textContent = `${Math.ceil(game.player?.hp ?? 0)} / ${Math.ceil(game.player?.maxHp ?? 0)}`;
   ui.xpFill.style.width = `${Math.max(0, Math.min(100, xpRatio * 100))}%`;
   ui.xpText.textContent = `${Math.floor(game.xp)} / ${game.xpNext}`;
   ui.levelText.textContent = String(game.level);
@@ -1273,6 +1314,17 @@ function updateHud(ui, game) {
   ui.pausePill.classList.toggle("is-visible", game.mode === GAME_MODES.PAUSED);
 
   const ownedWeapons = Object.entries(game.weapons).filter(([, level]) => level > 0);
+  ui.weaponsSummary.innerHTML = ownedWeapons.length
+    ? `
+      <span class="panel__summary-count">${ownedWeapons.length}</span>
+      <span class="panel__summary-icons">
+        ${ownedWeapons
+          .slice(0, 4)
+          .map(([key, level]) => `<span class="panel__summary-icon" style="${buildWeaponIconStyle(level, WEAPON_DEFS[key].iconColor)}"></span>`)
+          .join("")}
+      </span>
+    `
+    : '<span class="panel__summary-empty">none</span>';
   ui.weaponsList.innerHTML = ownedWeapons
     .map(([key, level]) => {
       const def = WEAPON_DEFS[key];
@@ -1343,6 +1395,7 @@ class Renderer {
     this.drawEnemies(game);
     this.drawCats(game);
     this.drawPlayer(game);
+    this.drawPlayerHp(game);
     this.drawEffects(game);
     this.drawFloatingTexts(game);
     ctx.restore();
@@ -1640,6 +1693,34 @@ class Renderer {
       ctx.arc(0, -3, player.radius * 0.44, 0, Math.PI * 2);
       ctx.fill();
     }
+    ctx.restore();
+  }
+
+  drawPlayerHp(game) {
+    const { ctx } = this;
+    const player = game.player;
+    const hpText = `${Math.ceil(player.hp)} / ${Math.ceil(player.maxHp)}`;
+    const hpRatio = clamp(player.hp / player.maxHp, 0, 1);
+    const barWidth = 72;
+    const barHeight = 8;
+    const barY = player.y + player.radius + 14;
+    const textY = barY + 18;
+    ctx.save();
+    ctx.fillStyle = "rgba(4, 10, 18, 0.72)";
+    ctx.fillRect(player.x - barWidth / 2, barY, barWidth, barHeight);
+    ctx.fillStyle = "#ff8c82";
+    ctx.fillRect(player.x - barWidth / 2, barY, barWidth * hpRatio, barHeight);
+    ctx.strokeStyle = "rgba(255, 255, 255, 0.14)";
+    ctx.lineWidth = 1;
+    ctx.strokeRect(player.x - barWidth / 2, barY, barWidth, barHeight);
+    ctx.textAlign = "center";
+    ctx.textBaseline = "middle";
+    ctx.font = "bold 12px 'Segoe UI', 'Hiragino Sans', 'Yu Gothic UI', sans-serif";
+    ctx.lineWidth = 4;
+    ctx.strokeStyle = "rgba(4, 10, 18, 0.78)";
+    ctx.strokeText(hpText, player.x, textY);
+    ctx.fillStyle = player.hp / player.maxHp <= 0.35 ? "#ff8c82" : "#f5fbff";
+    ctx.fillText(hpText, player.x, textY);
     ctx.restore();
   }
 
@@ -2283,6 +2364,7 @@ class Game {
 
 const canvas = document.getElementById("game-canvas");
 const ui = createUiBindings();
+initializeUi(ui);
 const input = new InputManager(canvas, document.getElementById("joystick-base"), document.getElementById("joystick-stick"));
 const game = new Game(canvas, input, ui);
 
