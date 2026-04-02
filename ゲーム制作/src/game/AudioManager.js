@@ -3,6 +3,8 @@ export class AudioManager {
     this.assetManager = assetManager;
     this.bgm = null;
     this.muted = false;
+    this.audioContext = null;
+    this.lastXpTickAt = 0;
   }
 
   playBgm(key) {
@@ -33,6 +35,44 @@ export class AudioManager {
     } catch {
       this.safePlay(source);
     }
+  }
+
+  playXpTick() {
+    if (this.muted) return;
+    const nowMs = performance.now();
+    if (nowMs - this.lastXpTickAt < 45) return;
+    this.lastXpTickAt = nowMs;
+    try {
+      const context = this.getAudioContext();
+      if (!context) return;
+      const now = context.currentTime;
+      const oscillator = context.createOscillator();
+      const gain = context.createGain();
+      const filter = context.createBiquadFilter();
+      oscillator.type = "square";
+      oscillator.frequency.setValueAtTime(1760, now);
+      oscillator.frequency.exponentialRampToValueAtTime(1320, now + 0.018);
+      filter.type = "highpass";
+      filter.frequency.setValueAtTime(1100, now);
+      gain.gain.setValueAtTime(0.0001, now);
+      gain.gain.exponentialRampToValueAtTime(0.06, now + 0.002);
+      gain.gain.exponentialRampToValueAtTime(0.0001, now + 0.035);
+      oscillator.connect(filter);
+      filter.connect(gain);
+      gain.connect(context.destination);
+      oscillator.start(now);
+      oscillator.stop(now + 0.04);
+    } catch {
+      return;
+    }
+  }
+
+  getAudioContext() {
+    if (this.audioContext) return this.audioContext;
+    const Ctx = window.AudioContext || window.webkitAudioContext;
+    if (!Ctx) return null;
+    this.audioContext = new Ctx();
+    return this.audioContext;
   }
 
   safePlay(audio) {
