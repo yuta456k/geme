@@ -236,14 +236,15 @@ export class Game {
         pickup.x += ((this.player.x - pickup.x) / (dist || 1)) * speed * dt;
         pickup.y += ((this.player.y - pickup.y) / (dist || 1)) * speed * dt;
       }
-      if (dist <= pickup.radius + this.player.radius) {
-        pickup.dead = true;
-        if (pickup.kind === "xp") {
-          this.xp += pickup.amount;
-          this.addFloatingText(`+${pickup.amount} XP`, this.player.x, this.player.y - 36, "#6af4c8", 14);
-        } else {
-          const healAmount = Math.round(pickup.amount * (1 + this.passives.colaBoost * 0.35));
-          this.player.hp = Math.min(this.player.maxHp, this.player.hp + healAmount);
+        if (dist <= pickup.radius + this.player.radius) {
+          pickup.dead = true;
+          if (pickup.kind === "xp") {
+            this.xp += pickup.amount;
+            this.addFloatingText(`+${pickup.amount} XP`, this.player.x, this.player.y - 36, "#6af4c8", 14);
+            this.audio.playXpTick();
+          } else {
+            const healAmount = Math.round(pickup.amount * (1 + this.passives.colaBoost * 0.35));
+            this.player.hp = Math.min(this.player.maxHp, this.player.hp + healAmount);
           this.addFloatingText(`+${healAmount} HP`, this.player.x, this.player.y - 50, "#86efac", 16);
           this.addEffect("heal", this.player.x, this.player.y, {});
           this.audio.playSe("se.heal", 0.3);
